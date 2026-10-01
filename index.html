@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f2b705">
+<title>Mitti – Lern-App</title>
+<style>
+:root{--img:url(mitti.webp);--bg:#fbf7ee;--card:#fff;--fg:#232220;--mut:#6f6b62;--acc:#f2b705;--me:#2f5d8a;--bd:#e6dfcf;--ok:#2e8b57;--no:#c0392b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1c1a;--card:#2a2926;--fg:#f2efe6;--mut:#a8a498;--bd:#3d3a34;--me:#3c6fa3}}
+:root[data-theme="dark"]{--bg:#1d1c1a;--card:#2a2926;--fg:#f2efe6;--mut:#a8a498;--bd:#3d3a34;--me:#3c6fa3}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:18px/1.55 Verdana,"Trebuchet MS",system-ui,sans-serif;display:flex;flex-direction:column}
+button{font:inherit;cursor:pointer;color:var(--fg)}
+header{padding:8px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}
+.av{width:42px;height:42px;border-radius:50%;flex:none;background:#fff var(--img) 53% 30%/240% no-repeat;border:2px solid var(--acc)}
+.lv{flex:1;min-width:0}.lv b{font-size:.85em}
+.bar{height:10px;background:var(--bd);border-radius:6px;overflow:hidden;margin-top:3px}
+.bar i{display:block;height:100%;background:var(--acc);transition:width .4s}
+main{flex:1;overflow-y:auto;padding:14px}
+.sec{display:none}.sec.on{display:block}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:12px}
+h2{margin:4px 0 10px;font-size:1.1em}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tp{background:var(--card);border:2px solid var(--bd);border-radius:14px;padding:10px;text-align:left}
+.tp small{display:block;color:var(--mut);font-size:.72em}
+.tp.mix{grid-column:1/-1;border-color:var(--acc)}
+.opt{display:block;width:100%;text-align:left;background:var(--card);border:2px solid var(--bd);border-radius:12px;padding:12px;margin:8px 0}
+.opt.ok{border-color:var(--ok);background:rgba(46,139,87,.18)}.opt.no{border-color:var(--no);background:rgba(192,57,43,.15)}
+.go{background:var(--acc);color:#232220;border:0;border-radius:22px;padding:11px 20px;font-weight:bold;margin-top:8px}
+.alt{background:none;border:2px solid var(--acc);border-radius:22px;padding:9px 16px;margin:8px 8px 0 0}
+.fb{margin-top:10px}.up{background:var(--acc);color:#232220;border-radius:14px;padding:12px;text-align:center;font-weight:bold;margin-bottom:12px}
+#chat{display:none;flex-direction:column;height:100%;padding:0}#chat.on{display:flex}
+#log{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:8px;align-items:flex-end}.row.me{justify-content:flex-end}
+.m{max-width:82%;padding:10px 14px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere}
+.u{background:var(--me);color:#fff;border-bottom-right-radius:4px}.b{background:var(--card);border:1px solid var(--bd);border-bottom-left-radius:4px}
+.cin{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd)}
+input{flex:1;min-width:0;background:var(--card);color:var(--fg);border:2px solid var(--bd);border-radius:22px;padding:10px 16px;font:inherit}
+nav{display:flex;border-top:1px solid var(--bd)}nav button{flex:1;background:none;border:0;padding:10px;font-size:.9em}nav .on{background:var(--acc);color:#232220;font-weight:bold}
+body.big{font-size:22px}
+</style>
+</head>
+<body>
+<header><div class="av"></div><div class="lv"><b id="lt"></b><div class="bar"><i id="lb"></i></div></div><button class="alt" id="big" style="margin:0;padding:4px 10px">Aa</button></header>
+<main id="main">
+<div class="sec on" id="start"></div>
+<div class="sec" id="home"></div>
+<div class="sec" id="quiz"></div>
+</main>
+<div class="sec" id="chat"><div id="log"></div><div class="cin"><input id="in" placeholder="Frag Mitti…" autocomplete="off"><button class="go" id="send" style="margin:0">Senden</button></div></div>
+<nav><button class="on" id="n1">🏠 Start</button><button id="n2">💬 Mitti</button></nav>
+<script>
+const T={H:['🧼','Hygiene'],M:['🔪','Messer & Schnitte'],G:['🍳','Garmethoden'],W:['🥕','Warenkunde'],R:['🧮','Rechnen'],F:['📖','Fachbegriffe'],S:['⚠️','Sicherheit'],B:['🥐','Backen'],K:['🍽️','Menükunde'],L:['🧊','Lagerung'],TM:['🪵','Holz & Material'],TW:['🪚','Werkzeug & Sicherheit'],SM:['🔩','Metall & Material'],SW:['🛠️','Werkzeug & Sicherheit'],EV:['🛍️','Verkauf & Kunden'],EW:['🧾','Ware & Kasse'],GP:['🌱','Pflanzen & Boden'],GW:['✂️','Werkzeug & Sicherheit'],VS:['🦺','Sicherheit & Verkehr'],VB:['🛣️','Straße & Pflege'],RC:['🧴','Mittel & Chemie'],RH:['🧽','Hygiene & Technik'],XM:['🧵','Stoffe & Material'],XN:['🪡','Nähen & Maschine'],TB:['🔨','Verbindungen & Oberfläche'],SK:['🔥','Bohren, Löten & Härten'],EL:['📦','Lager & Sortiment'],GB:['🌻','Beet & Jahreszeiten'],VM:['🚜','Maschinen & Pflege'],RM:['🪟','Flächen & Materialien'],XB:['✂️','Zuschnitt & Pflege']};
+// [Thema, Schwierigkeit 1-3, Frage, [richtig, falsch, falsch, ...], Erklärung]
+const Q=[
+['H',1,'Wann musst du dir die Hände waschen?',['Vor der Arbeit, nach dem WC und nach rohem Fleisch','Nur am Feierabend','Nur wenn sie dreckig aussehen'],'Rohes Fleisch und WC bringen Keime an die Hände. Auch vor Arbeitsbeginn waschen.'],
+['H',1,'Was bedeutet FIFO im Lager?',['Älteres zuerst verbrauchen (first in, first out)','Fisch immer offen lagern','Fertig in fünf Minuten'],'So wird nichts schlecht. Neue Ware kommt nach hinten.'],
+['H',2,'Warum nutzt man getrennte Bretter für rohes Fleisch und Salat?',['Keime vom Fleisch sollen nicht auf den Salat kommen','Die Bretter halten länger','Wegen der Farbe'],'Das nennt man Kreuzkontamination.'],
+['H',2,'Was ist HACCP?',['Ein System, das Gefahren bei Lebensmitteln erkennt und kontrolliert','Ein Rezeptbuch','Eine Kleidervorschrift'],'HACCP ist die Eigenkontrolle für sichere Lebensmittel.'],
+['H',3,'In welchem Bereich wachsen Keime besonders schnell?',['Etwa 5 °C bis 60 °C','Unter 0 °C','Über 100 °C'],'Darum Kaltes kalt und Warmes heiß halten.'],
+['H',3,'Ab welcher Kerntemperatur ist Geflügel meist gar?',['Etwa 75 °C','Etwa 40 °C','Etwa 55 °C'],'Geflügel kann Salmonellen enthalten. Es muss durchgegart sein.'],
+['M',1,'Wie hältst du beim Schneiden das Gargut?',['Mit eingeklappten Fingerspitzen (Krallengriff)','Mit flachen, gestreckten Fingern','Mit der ganzen Faust'],'Die Fingerknöchel führen die Klinge. So schneidest du dich nicht.'],
+['M',1,'Welches Messer ist sicherer?',['Ein scharfes','Ein stumpfes','Beide gleich'],'Ein stumpfes Messer rutscht leichter ab.'],
+['M',2,'Was ist eine Julienne?',['Feine Streifen','Würfel','Scheiben'],'Zum Beispiel Karotten in feinen Stiften.'],
+['M',2,'Was ist eine Brunoise?',['Sehr feine Würfel','Dünne Streifen','Runde Scheiben'],'Brunoise sind winzige Würfel, etwa 2 mm.'],
+['M',3,'Womit richtest du die Schneide zwischendurch auf?',['Mit dem Wetzstahl','Mit dem Schneebesen','Mit dem Sparschäler'],'Der Wetzstahl richtet die Schneide auf. Schleifen macht man mit dem Stein.'],
+['G',1,'Was heißt Blanchieren?',['Kurz kochen und eiskalt abschrecken','Stundenlang schmoren','Roh einfrieren'],'So bleibt Gemüse knackig und farbig.'],
+['G',2,'Was ist Pochieren?',['Garen in heißer Flüssigkeit knapp unter dem Kochen','Frittieren','Grillen'],'Typisch für pochierte Eier. Das Wasser sprudelt nicht.'],
+['G',2,'Was ist Schmoren?',['Anbraten, dann mit Flüssigkeit zugedeckt langsam garen','Roh marinieren','In viel Fett backen'],'Schmoren macht zähes Fleisch zart.'],
+['G',3,'Was macht die braune Kruste und die Röstaromen beim Anbraten?',['Die Maillard-Reaktion','Gefrierbrand','Pasteurisieren'],'Eiweiß und Zucker reagieren bei Hitze und geben Geschmack.'],
+['G',3,'Warum lässt man gebratenes Fleisch kurz ruhen?',['Der Saft verteilt sich wieder im Fleisch','Es wird salziger','Es wird kälter und härter'],'Sonst läuft beim Anschneiden der Saft heraus.'],
+['W',1,'Welches Gemüse ist ein Wurzelgemüse?',['Karotte','Brokkoli','Tomate'],'Karotte, Sellerie und rote Bete wachsen unter der Erde.'],
+['W',2,'Woran erkennst du frischen Fisch?',['Klare Augen und rote Kiemen','Trübe Augen','Graue Kiemen'],'Frischer Fisch riecht mild, nicht streng.'],
+['W',2,'Welche Zutat ist ein Allergen, das du kennzeichnen musst?',['Erdnüsse','Wasser','Salz'],'Auch Milch, Eier, Gluten, Soja und Sellerie gehören dazu.'],
+['R',1,'Das Rezept ist für 4 Personen und braucht 200 g Reis. Wie viel für 8?',['400 g','300 g','800 g'],'Doppelte Personenzahl heißt doppelte Menge.'],
+['R',1,'Wie viele Gramm sind 2 kg?',['2000 g','200 g','20 g'],'1 kg sind 1000 g.'],
+['R',2,'Du schälst 5 kg Kartoffeln und hast 20 % Schälverlust. Wie viel bleibt?',['4 kg','3 kg','4,5 kg'],'20 % von 5 kg sind 1 kg. 5 − 1 = 4.'],
+['R',2,'Für 10 Portionen brauchst du 1,5 l Milch. Wie viel für 4 Portionen?',['0,6 l','0,4 l','1 l'],'1,5 l ÷ 10 = 0,15 l pro Portion. Mal 4 sind 0,6 l.'],
+['R',3,'Eine Zutat kostet 12 € pro kg. Du brauchst 250 g. Was kostet das?',['3 €','2 €','4 €'],'250 g ist ein Viertel von 1 kg. 12 € ÷ 4 = 3 €.'],
+['F',1,'Was bedeutet Mise en place?',['Alles vorbereiten und bereitstellen','Den Tisch abräumen','Das Menü schreiben'],'Gut vorbereitet arbeitest du schneller und sicherer.'],
+['F',2,'Was bedeutet al dente?',['Noch leicht bissfest','Ganz weich','Roh'],'Typisch bei Nudeln.'],
+['F',2,'Was ist ein Fond?',['Eine aromatische Brühe als Basis für Soßen','Ein Dessert','Ein Messer'],'Fonds entstehen aus Knochen, Gemüse und Wasser.'],
+['F',3,'Was ist eine Mehlschwitze (Roux)?',['Fett und Mehl, zum Binden von Soßen','Ein Gewürz','Ein Gemüse'],'Die Mischung wird erhitzt und dann mit Flüssigkeit verrührt.'],
+['F',3,'Wofür ist der Saucier zuständig?',['Für Soßen','Für Brot','Für Desserts'],'In der Brigade hat jeder Posten eine eigene Aufgabe.'],
+['S',1,'Heißes Fett brennt. Was tust du?',['Deckel drauf, Hitze aus','Mit Wasser löschen','Den Topf wegtragen'],'Wasser löscht Fettbrand nicht. Es führt zu einer Stichflamme.'],
+['S',1,'Der Boden ist nass. Was tust du?',['Sofort aufwischen oder ein Warnschild aufstellen','Nichts, das trocknet','Drüberlaufen'],'Rutschunfälle sind in der Küche sehr häufig.'],
+['S',2,'Wie trägst du einen heißen Topf?',['Mit trockenem Tuch oder Handschuh und rufst "Achtung heiß!"','Mit einem nassen Tuch','Ohne Schutz, aber schnell'],'Nasse Tücher leiten Hitze und verbrennen dich.'],
+['S',3,'Wie trägst du ein Messer durch die Küche?',['Spitze nach unten, Klinge am Körper, mit Zuruf','Spitze nach vorn','In der Schürzentasche'],'So verletzt du niemanden, wenn jemand um die Ecke kommt.'],
+['B',1,'Was braucht Hefeteig, damit er aufgeht?',['Wärme und etwas Zeit','Eiskalte Luft','Viel Salz direkt auf der Hefe'],'Zu viel Hitze oder Salz schadet der Hefe.'],
+['B',1,'Warum wiegt man beim Backen genau ab?',['Kleine Fehler verändern das Ergebnis stark','Das ist egal','Damit es teurer wird'],'Beim Backen zählt das Verhältnis der Zutaten.'],
+['B',2,'Was ist ein Mürbeteig?',['Ein zarter, bröseliger Teig aus Mehl, Fett und Zucker','Ein Teig mit viel Hefe','Ein flüssiger Teig'],'Er wird zum Beispiel für Tartes und Plätzchen genutzt.'],
+['B',2,'Wofür nimmt man Backpulver?',['Es lockert den Teig auf','Zum Färben','Zum Süßen'],'Backpulver ist ein Triebmittel und setzt Gas frei.'],
+['B',3,'Wie gelingt Eischnee am besten?',['Sauberes, fettfreies Gefäß','Fettige Schüssel','Etwas Eigelb dazugeben'],'Schon ein Tropfen Fett oder Eigelb verhindert, dass Eiweiß fest wird.'],
+['B',3,'Was heißt blindbacken?',['Einen Teigboden ohne Füllung vorbacken','Ohne Rezept backen','Teig einfrieren'],'Meist legt man Backpapier und Hülsenfrüchte auf den Teig.'],
+['K',1,'Woraus besteht ein klassisches Drei-Gänge-Menü?',['Vorspeise, Hauptgericht, Dessert','Frühstück, Mittag, Abend','Suppe, Brot, Käse'],'Oft kommt noch ein Zwischengang dazu.'],
+['K',1,'Was ist eine Beilage?',['Eine Ergänzung zum Hauptgericht, zum Beispiel Reis','Das Hauptgericht','Ein Getränk'],'Typische Beilagen sind Reis, Kartoffeln oder Gemüse.'],
+['K',2,'Was bedeutet saisonal kochen?',['Zutaten nutzen, die gerade Saison haben','Nur Tiefkühlware','Nur Gewürze verwenden'],'Saisonale Ware schmeckt oft besser und ist günstiger.'],
+['K',2,'Was bedeutet à la carte?',['Gerichte werden einzeln aus der Karte bestellt','Festes Menü zum Fixpreis','Ein Buffet'],'Das Gegenteil ist ein festes Menü.'],
+['K',3,'Was ist der Wareneinsatz?',['Die Kosten der Zutaten für ein Gericht','Der Lohn des Kochs','Die Miete der Küche'],'Damit rechnet man den Verkaufspreis aus.'],
+['K',3,'Was ist eine Kalkulation?',['Die Berechnung der Kosten und des Verkaufspreises','Ein Kochrezept','Ein Messertyp'],'Dazu gehören Zutaten, Arbeitszeit und Nebenkosten.'],
+['L',1,'Wie lagerst du Kartoffeln am besten?',['Dunkel, kühl und trocken','Hell und warm','Nass im Kühlschrank'],'Licht macht sie grün. Das Grün ist nicht gesund.'],
+['L',1,'Was hilft gegen Lebensmittelverschwendung?',['Gut planen und Reste verwerten','Alles Übrige wegwerfen','Mehr einkaufen als nötig'],'Aus Resten werden zum Beispiel Suppen oder Fonds.'],
+['L',2,'Warum kommt rohes Fleisch im Kühlschrank nach unten?',['Es kann nicht auf andere Lebensmittel tropfen','Dort ist es wärmer','Wegen der Optik'],'So vermeidest du Keime auf anderen Speisen.'],
+['L',2,'Welche Temperatur braucht Tiefkühlware?',['Etwa −18 °C','0 °C','−5 °C'],'Bei −18 °C wachsen keine Keime.'],
+['L',3,'Was ist der Unterschied zwischen MHD und Verbrauchsdatum?',['Nach dem MHD oft noch essbar, nach dem Verbrauchsdatum nicht mehr','Beides ist dasselbe','Das Verbrauchsdatum ist unwichtig'],'Das Verbrauchsdatum steht bei leicht verderblichen Produkten wie Hackfleisch.'],
+['L',3,'Was bedeutet die Kühlkette?',['Ware wird von der Lieferung bis zur Küche durchgehend gekühlt','Eine Kette am Kühlschrank','Ein Rezept für Eis'],'Wird sie unterbrochen, können sich Keime vermehren.'],
+['TM',1,'Welches Holz ist ein Laubholz?',['Eiche','Fichte','Kiefer'],'Eiche, Buche und Ahorn sind Laubhölzer. Fichte und Kiefer sind Nadelhölzer.'],
+['TM',2,'Was passiert, wenn Holz feucht wird?',['Es quillt auf und arbeitet','Es schrumpft und wird härter','Nichts'],'Holz nimmt Feuchtigkeit auf und dehnt sich aus.'],
+['TM',3,'Was ist Furnier?',['Eine dünne Holzschicht für Oberflächen','Ein Lack','Eine Schraube'],'Furnier wird oft auf Trägerplatten geklebt.'],
+['TW',1,'Was tust du vor dem Sägen?',['Das Werkstück sicher festspannen','Es mit der Hand festhalten','Die Schutzbrille abnehmen'],'Ein festgespanntes Werkstück rutscht nicht.'],
+['TW',2,'Warum trägst du an der Kreissäge Schutzbrille und Gehörschutz?',['Gegen Späne und Lärm','Nur wegen der Optik','Gegen Kälte'],'Maschinen sind laut, und Späne fliegen.'],
+['TW',3,'Was ist eine Gehrung?',['Ein Schnitt im Winkel, meist 45°, für Ecken','Ein Leimtyp','Eine Schraubenart'],'Zwei Gehrungsschnitte ergeben zum Beispiel eine rechtwinklige Ecke.'],
+['SM',1,'Welches Material kann rosten?',['Stahl','Aluminium','Kunststoff'],'Eisen und Stahl rosten bei Wasser und Sauerstoff.'],
+['SM',2,'Wozu verzinkt man Stahl?',['Als Schutz vor Rost','Zum Färben','Damit er leichter wird'],'Die Zinkschicht schützt den Stahl.'],
+['SM',3,'Was bedeutet Toleranz bei Maßen?',['Die erlaubte Abweichung vom Sollmaß','Ein Werkzeug','Eine Metallart'],'Kein Teil ist perfekt genau. Die Toleranz sagt, wie viel erlaubt ist.'],
+['SW',1,'Was trägst du beim Schleifen und Flexen?',['Schutzbrille und Gehörschutz','Offene Haare und Schal','Nichts'],'Funken und Splitter fliegen. Lose Teile können sich verfangen.'],
+['SW',2,'Wofür nutzt du eine Schieblehre?',['Für genaue Längen, innen und außen','Zum Sägen','Zum Schweißen'],'Sie misst viel genauer als ein Zollstock.'],
+['SW',3,'Warum trägst du keine Handschuhe an der Bohrmaschine?',['Sie können sich verfangen und die Hand mitziehen','Sie sind zu warm','Sie rutschen nie'],'An drehenden Teilen ist das gefährlich.'],
+['EV',1,'Wie begrüßt du Kunden?',['Freundlich und mit Blickkontakt','Gar nicht','Erst nach 10 Minuten'],'Der erste Eindruck zählt.'],
+['EV',2,'Ein Kunde beschwert sich. Was tust du?',['Ruhig zuhören und eine Lösung suchen','Diskutieren','Weggehen'],'Wer sich ernst genommen fühlt, beruhigt sich schneller.'],
+['EV',3,'Was ist Zusatzverkauf?',['Passende Produkte zusätzlich anbieten','Etwas Verbotenes','Ware zurücknehmen'],'Zum Beispiel Batterien zum Spielzeug.'],
+['EW',1,'Der Kunde zahlt 8,50 € mit einem 10-€-Schein. Wie viel Wechselgeld?',['1,50 €','2,50 €','1,00 €'],'10,00 € − 8,50 € = 1,50 €.'],
+['EW',2,'Wie viel kostet ein 50-€-Artikel mit 20 % Rabatt?',['40 €','30 €','45 €'],'20 % von 50 € sind 10 €. 50 − 10 = 40.'],
+['EW',3,'Was ist eine Inventur?',['Das Zählen und Erfassen aller Waren','Ein Kassenfehler','Ein Rabatt'],'So weiß der Betrieb, was im Lager ist.'],
+['GP',1,'Was brauchen Pflanzen zum Wachsen?',['Licht, Wasser und Nährstoffe','Nur Dunkelheit','Nur Sand'],'Ohne Licht kann die Pflanze keine Energie bilden.'],
+['GP',2,'Was ist Kompost?',['Verrottete Pflanzenreste, die den Boden verbessern','Ein Kunstdünger','Ein Unkraut'],'Er macht den Boden locker und nährstoffreich.'],
+['GP',3,'Was bedeutet Mulchen?',['Den Boden mit Pflanzenmaterial abdecken','Pflanzen abschneiden','Den Boden umgraben'],'So bleibt der Boden feucht und Unkraut wächst weniger.'],
+['GW',1,'Was trägst du bei der Motorsense?',['Schutzbrille, Gehörschutz und feste Schuhe','Sandalen','Nichts'],'Steine und Äste können wegfliegen.'],
+['GW',2,'Warum reinigt man Gartenscheren nach kranken Pflanzen?',['Damit Krankheiten nicht weitergegeben werden','Wegen der Optik','Das ist unnötig'],'Auf der Klinge können Erreger sitzen.'],
+['GW',3,'Was ist beim Umgang mit Pflanzenschutzmitteln wichtig?',['Hinweise lesen und Schutzkleidung tragen','Nach Gefühl mischen','Ohne Handschuhe arbeiten'],'Die Packungsangabe zeigt die richtige Menge.'],
+['VS',1,'Warum trägst du Warnkleidung?',['Damit Autofahrer dich gut sehen','Wegen der Mode','Gegen Kälte'],'Gelb und Orange fallen im Verkehr früh auf.'],
+['VS',2,'Wozu dient die Absperrung einer Arbeitsstelle?',['Sie schützt Arbeiter und Verkehr','Als Dekoration','Gegen Tiere'],'Autofahrer sehen früh, dass sie langsam fahren müssen.'],
+['VS',3,'Was ist vor Arbeiten am Fahrbahnrand wichtig?',['Die Stelle richtig absichern und beschildern','Nichts, es geht ja schnell','Nur laut rufen'],'Die Absicherung kommt immer vor der Arbeit.'],
+['VB',1,'Was gehört zur Straßenerhaltung?',['Schlaglöcher füllen und Straßen reinigen','Autos reparieren','Ampeln verkaufen'],'Ziel ist, dass Straßen sicher befahrbar bleiben.'],
+['VB',2,'Warum streut man im Winter Salz oder Splitt?',['Das Eis wird weniger glatt','Für die Optik','Für die Pflanzen'],'Salz taut Eis auf, Splitt gibt Halt.'],
+['VB',3,'Woraus besteht Asphalt?',['Aus Gestein und Bitumen','Nur aus Beton','Aus Holz'],'Bitumen ist das Bindemittel.'],
+['RC',1,'Warum liest du das Etikett eines Reinigungsmittels?',['Für Dosierung und Sicherheitshinweise','Wegen der Farbe','Das ist unnötig'],'Zu viel Mittel ist teuer und kann schaden.'],
+['RC',2,'Darfst du Reinigungsmittel mischen?',['Nein, es können giftige Gase entstehen','Ja, das putzt besser','Ja, immer'],'Zum Beispiel entsteht aus Chlor und Säure ein giftiges Gas.'],
+['RC',3,'Was ist die Einwirkzeit?',['Die Zeit, die das Mittel wirken muss, bevor man wischt','Die Pausenzeit','Die Zeit bis Feierabend'],'Ohne Einwirkzeit löst sich der Schmutz schlechter.'],
+['RH',1,'Was stellst du nach dem Wischen auf?',['Ein Schild "Nasser Boden"','Nichts','Einen Stuhl'],'Nasse Böden sind rutschig.'],
+['RH',2,'Warum nutzt man Tücher in verschiedenen Farben?',['Damit keine Keime vom WC in andere Bereiche gelangen','Wegen der Mode','Weil sie billiger sind'],'Jede Farbe gehört zu einem Bereich.'],
+['RH',3,'In welcher Reihenfolge reinigst du einen Raum?',['Von oben nach unten, den Boden zuletzt','Erst den Boden, dann oben','Ganz zufällig'],'Schmutz fällt nach unten.'],
+['XM',1,'Welche Faser ist eine Naturfaser?',['Baumwolle','Polyester','Nylon'],'Auch Wolle, Leinen und Seide sind Naturfasern.'],
+['XM',2,'Was bedeutet die Zahl 30 im Waschsymbol?',['Höchstens 30 °C Wassertemperatur','30 Minuten waschen','30 Kilo'],'Bei höherer Temperatur kann das Teil einlaufen.'],
+['XM',3,'Was ist die Webkante?',['Der feste Rand eines gewebten Stoffs','Ein Nähfaden','Ein Knopf'],'Sie franst nicht aus.'],
+['XN',1,'Wie schützt du deine Finger an der Nähmaschine?',['Finger weit weg von der Nadel halten','Nähen ohne Licht','Die Nadel mit der Hand drehen'],'Die Nadel bewegt sich sehr schnell.'],
+['XN',2,'Wozu dienen Stecknadeln?',['Stoffteile halten, damit sie nicht verrutschen','Als Dekoration','Zum Schneiden'],'Sie fixieren den Stoff vor dem Nähen.'],
+['XN',3,'Was ist die Nahtzugabe?',['Der Stoffrand außerhalb der Nahtlinie','Ein Knopf','Die Garnfarbe'],'Ohne sie wäre das Teil nach dem Nähen zu klein.'],
+['TB',1,'Wie nennt man das Übertragen von Maßen auf das Holz?',['Anreißen','Verleimen','Beizen'],'Mit Bleistift und Winkel zeichnest du die Schnitte vor.'],
+['TB',1,'Wofür nutzt du den Winkel?',['Rechte Winkel anreißen und prüfen','Löcher bohren','Holz leimen'],'Nur wenn Winkel stimmen, passen Teile zusammen.'],
+['TB',2,'Was ist ein Dübel?',['Ein Holzstift, der zwei Teile verbindet','Ein Lack','Eine Säge'],'Dübel machen Verbindungen stabil und genau.'],
+['TB',2,'Welches Schleifpapier ist feiner?',['Mit hoher Körnung, z. B. 240','Mit niedriger Körnung, z. B. 40','Beide gleich'],'Hohe Zahl heißt feine Körnung.'],
+['TB',3,'Was bedeutet mit der Faser hobeln?',['In Richtung der Holzfasern','Quer zu den Fasern','Im Kreis'],'Gegen die Faser kann das Holz ausreißen.'],
+['TB',3,'Wozu dienen Lasur und Lack?',['Schutz und Optik der Oberfläche','Zum Kleben','Zum Sägen'],'Sie schützen das Holz vor Feuchtigkeit und Schmutz.'],
+['SK',1,'Wozu dient eine Feile?',['Material abtragen und glätten','Löcher bohren','Schweißen'],'Mit Feilen bringst du Kanten in Form.'],
+['SK',1,'Was machst du, bevor du bohrst?',['Die Stelle körnen, damit der Bohrer nicht verläuft','Ohne Markierung bohren','Handschuhe anziehen'],'Der Körner macht eine kleine Mulde für die Bohrerspitze.'],
+['SK',2,'Wie viele Millimeter sind 2,5 cm?',['25 mm','2,5 mm','250 mm'],'1 cm sind 10 mm.'],
+['SK',2,'Was ist Löten?',['Metalle mit geschmolzenem Lot verbinden','Metall lackieren','Metall biegen'],'Das Lot schmilzt, die Teile selbst bleiben fest.'],
+['SK',3,'Was passiert beim Härten von Stahl?',['Er wird erhitzt und schnell abgekühlt, so wird er härter','Er wird bemalt','Er wird verzinkt'],'Gehärteter Stahl ist hart, aber auch spröder.'],
+['SK',3,'Warum sicherst du ein Werkstück vor dem Flexen?',['Damit es nicht wegfliegt oder sich verdreht','Wegen der Optik','Das ist egal'],'Ein loses Teil kann gefährlich werden.'],
+['EL',1,'Wohin kommen neue Waren im Regal?',['Nach hinten, ältere Ware nach vorn','Nach vorn','Egal'],'So wird älteres zuerst verkauft.'],
+['EL',1,'Was bedeutet MHD?',['Mindesthaltbarkeitsdatum','Maximale Herstellung','Mehrwertdienst'],'Das MHD sagt, wie lange die Qualität zugesichert ist.'],
+['EL',2,'Was ist das Sortiment?',['Alle Waren, die ein Geschäft anbietet','Der Chef','Die Kasse'],'Das Sortiment hängt vom Geschäft ab.'],
+['EL',2,'Wozu ist der Kassenbon wichtig?',['Als Nachweis für den Kauf, zum Beispiel beim Umtausch','Als Dekoration','Nur für die Kasse'],'Der Bon zeigt, was und wann gekauft wurde.'],
+['EL',3,'Was ist der Unterschied zwischen brutto und netto?',['Brutto ist mit Steuer, netto ohne Steuer','Netto ist teurer','Beides ist gleich'],'Kunden sehen meist den Bruttopreis.'],
+['EL',3,'Was ist Warenpräsentation?',['Waren so ordnen, dass Kunden sie gut sehen','Waren verstecken','Waren verschenken'],'Gute Präsentation macht Lust aufs Kaufen.'],
+['GB',1,'Was ist Unkraut?',['Pflanzen, die dort wachsen, wo man sie nicht will','Eine Gemüsesorte','Ein Dünger'],'Sie nehmen anderen Pflanzen Licht und Nährstoffe weg.'],
+['GB',1,'Wann sät man viele Gemüse draußen aus?',['Im Frühling, wenn kein Frost mehr droht','Mitten im Winter','Nie'],'Frost kann junge Pflanzen zerstören.'],
+['GB',2,'Wozu dient Dünger?',['Er liefert Nährstoffe','Er ersetzt Wasser','Er ersetzt Licht'],'Zu viel Dünger kann Pflanzen aber schaden.'],
+['GB',2,'Warum schneidet man Obstbäume?',['Für Form, Licht und bessere Ernte','Damit sie sterben','Für mehr Schatten'],'Licht im Baum hilft den Früchten beim Reifen.'],
+['GB',3,'Was ist eine Fruchtfolge?',['Der Wechsel der Pflanzenarten auf einem Beet von Jahr zu Jahr','Die Reihenfolge der Ernte am Tag','Eine Düngerart'],'So wird der Boden nicht einseitig ausgelaugt.'],
+['GB',3,'Was ist Staunässe?',['Wasser, das nicht abfließt und die Wurzeln schädigt','Ein kurzer Regen','Trockenheit'],'Wurzeln brauchen auch Luft.'],
+['VM',1,'Wozu dient eine Kehrmaschine?',['Straßen von Schmutz und Laub reinigen','Asphalt schmelzen','Schnee machen'],'Sauberes Pflaster ist sicherer.'],
+['VM',1,'Warum reinigt man Gullys?',['Damit Regenwasser abfließen kann','Wegen des Geruchs','Für die Optik'],'Verstopfte Abläufe führen zu Pfützen und Glätte.'],
+['VM',2,'Was ist ein Bankett?',['Der befestigte Seitenstreifen neben der Fahrbahn','Ein Fest','Ein Verkehrsschild'],'Es stützt den Rand der Straße.'],
+['VM',2,'Warum mäht man Grünstreifen an Straßen?',['Damit die Sicht frei bleibt','Für Heu','Für Wettbewerbe'],'Hohes Gras verdeckt Schilder und Kurven.'],
+['VM',3,'Was bedeutet Tragfähigkeit einer Straße?',['Wie viel Last sie aushält','Wie breit sie ist','Wie schön sie ist'],'Schwere Lkw brauchen einen starken Aufbau.'],
+['VM',3,'Was gehört zum Winterdienst?',['Räumen und Streuen bei Schnee und Eis','Reifen verkaufen','Nur Salz einkaufen'],'Ziel sind sichere und befahrbare Straßen.'],
+['RM',1,'Warum wechselst du das Wischwasser?',['Schmutziges Wasser verteilt den Schmutz nur','Es wird sonst zu kalt','Das ist egal'],'Frisches Wasser reinigt besser.'],
+['RM',1,'Was trägst du beim Umgang mit Reinigungsmitteln?',['Handschuhe','Offene Sandalen','Nichts'],'Viele Mittel reizen die Haut.'],
+['RM',2,'Warum gibt es Mittel für Holz, Stein und Glas?',['Falsche Mittel können die Oberfläche beschädigen','Wegen des Preises','Alles ist gleich'],'Zum Beispiel ist Säure schlecht für Naturstein.'],
+['RM',2,'Was heißt Desinfektion?',['Keime abtöten oder stark verringern','Nur sauber aussehen','Den Boden polieren'],'Sie wird zum Beispiel in Krankenhäusern genutzt.'],
+['RM',3,'Was ist der Unterschied zwischen Reinigen und Desinfizieren?',['Reinigen entfernt Schmutz, Desinfizieren verringert Keime','Dasselbe','Desinfizieren entfernt Staub'],'Oft wird erst gereinigt und dann desinfiziert.'],
+['RM',3,'Was ist ein Sicherheitsdatenblatt?',['Ein Dokument mit Gefahren und Hinweisen zu einem Mittel','Ein Putzplan','Eine Rechnung'],'Dort steht, wie du ein Mittel sicher benutzt.'],
+['XB',1,'Wozu nutzt du eine Stoffschere?',['Nur für Stoff, damit sie scharf bleibt','Auch für Papier','Für Draht'],'Papier macht Scheren schnell stumpf.'],
+['XB',1,'Wozu dient ein Maßband?',['Maße an Körper und Stoff nehmen','Stoff bügeln','Garn färben'],'Das Maßband ist biegsam und misst Rundungen.'],
+['XB',2,'Warum bügelt man Stoff vor dem Zuschnitt?',['Damit die Maße genau stimmen','Damit er riecht','Damit er schwerer wird'],'Falten verfälschen Längen.'],
+['XB',2,'Welche Faser knittert meist stärker?',['Baumwolle','Polyester','Keine'],'Polyester ist knitterärmer.'],
+['XB',3,'Was ist der Fadenlauf?',['Die Richtung der Längsfäden im Stoff','Die Garnfarbe','Die Nadelstärke'],'Schnittteile legt man passend zum Fadenlauf auf.'],
+['XB',3,'Wozu dient eine Overlockmaschine?',['Stoffkanten versäubern, damit sie nicht ausfransen','Löcher stanzen','Stoff färben'],'Sie näht und schneidet die Kante in einem Schritt.']
+];
+const $=id=>document.getElementById(id);
+const TITLES=['Küchenhilfe','Lehrling','Jungkoch','Commis de Cuisine','Chef de Partie','Sous-Chef','Küchenchef','Meisterkoch'];
+let S={xp:0,m:{},t:{}};
+try{S=Object.assign(S,JSON.parse(localStorage.getItem('mitti')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('mitti',JSON.stringify(S))}catch(e){}};
+const lvl=()=>Math.floor(S.xp/50)+1;
+const title=l=>TITLES[Math.min(l-1,TITLES.length-1)];
+function head(){$('lt').textContent='Level '+lvl()+' · '+title(lvl())+' · '+S.xp+' XP';$('lb').style.width=(S.xp%50)*2+'%'}
+function show(id){['start','home','quiz'].forEach(s=>$(s).classList.toggle('on',s===id));$('chat').classList.remove('on');$('main').style.display='block';$('n1').className='on';$('n2').className=''}
+const P={g:['🍳','Gastronomie',['H','M','G','W','R','F','S','B','K','L']],t:['🪚','Tischlerei',['TM','TW','TB']],s:['🔩','Schlosserei',['SM','SW','SK']],e:['🛍️','Einzelhandel',['EV','EW','EL']],a:['🌳','Gartenbau',['GP','GW','GB']],v:['🛣️','Straßenerhaltung',['VS','VB','VM']],r:['🧹','Reinigung',['RC','RH','RM']],x:['🧵','Textil',['XM','XN','XB']]};
+let CUR='g';
+function startMenu(){
+  let h='<div style="text-align:center"><img src="mitti.webp" alt="Mitti" style="width:180px;border-radius:24px;background:#fff"><h2>Hi, ich bin Mitti! 💡</h2><div style="margin-bottom:12px">Was möchtest du lernen?</div></div><div class="grid">';
+  for(const k in P)h+=`<button class="tp" data-p="${k}" style="text-align:center"><b>${P[k][0]} ${P[k][1]}</b></button>`;
+  $('start').innerHTML=h+'</div>';
+  $('start').querySelectorAll('.tp').forEach(b=>b.onclick=()=>profMenu(b.dataset.p));
+  show('start');head();
+}
+function profMenu(p){
+  CUR=p;const [ic,nm,ts]=P[p];
+  let h=`<button class="alt" id="bk0" style="margin:0 0 10px">← Berufe</button><div class="card"><h2>${ic} ${nm}: Was willst du üben?</h2><div class="grid"><button class="tp mix" data-t="mix"><b>🎲 Alles gemischt</b><small>Fragen passend zu deinem Level</small></button>`;
+  ts.forEach(k=>{const s=S.t[k]||[0,0];h+=`<button class="tp" data-t="${k}"><b>${T[k][0]} ${T[k][1]}</b><small>${s[0]} von ${s[1]} richtig</small></button>`});
+  $('home').innerHTML=h+'</div></div><div class="card"><small>Pro richtige Antwort bekommst du 10 XP. Alle 50 XP steigst du ein Level auf. Höhere Level haben schwierigere Fragen.</small></div>';
+  $('bk0').onclick=startMenu;
+  $('home').querySelectorAll('.tp').forEach(b=>b.onclick=()=>play(b.dataset.t));
+  show('home');head();
+}
+let R;
+function play(t){
+  const l=lvl(),maxD=l<3?1:l<5?2:3;
+  let ids=Q.map((q,i)=>i).filter(i=>(t==='mix'?P[CUR][2].includes(Q[i][0]):Q[i][0]===t)&&Q[i][1]<=maxD);
+  if(ids.length<5)ids=Q.map((q,i)=>i).filter(i=>t==='mix'?P[CUR][2].includes(Q[i][0]):Q[i][0]===t);
+  ids.sort((a,b)=>(S.m[a]||0)+Math.random()*1.2-((S.m[b]||0)+Math.random()*1.2));
+  R={t,ids:ids.slice(0,5),i:0,ok:0,l0:l,x0:S.xp};ask();
+}
+function ask(){
+  const id=R.ids[R.i],q=Q[id],opts=q[3].map((o,k)=>[o,k===0]).sort(()=>Math.random()-.5);
+  $('quiz').innerHTML=`<div class="card"><small>${T[q[0]][1]} · Frage ${R.i+1} von ${R.ids.length}</small><h2>${q[2]}</h2><div id="o"></div><div class="fb" id="fb"></div></div>`;
+  opts.forEach(([o,c])=>{const b=document.createElement('button');b.className='opt';b.textContent=o;b.onclick=()=>pick(b,c,id,o);$('o').appendChild(b)});
+  show('quiz');
+}
+function pick(btn,c,id,txt){
+  const q=Q[id];[...$('o').children].forEach(b=>{b.disabled=true;if(b.textContent===q[3][0])b.classList.add('ok')});
+  const s=S.t[q[0]]||[0,0];s[1]++;
+  if(c){S.xp+=10;R.ok++;S.m[id]=(S.m[id]||0)+1;s[0]++}else{btn.classList.add('no');S.m[id]=Math.max(0,(S.m[id]||0)-1)}
+  S.t[q[0]]=s;save();head();
+  let h=`<b>${c?'✅ Richtig!':'❌ Nicht ganz.'}</b><br>${q[4]}<br>`;
+  if(!c)h+='<button class="alt" id="am">💡 Frag Mitti</button>';
+  h+=`<button class="go" id="nx">${R.i+1<R.ids.length?'Weiter':'Ergebnis'}</button>`;
+  $('fb').innerHTML=h;$('nx').onclick=()=>{R.i++;R.i<R.ids.length?ask():done()};
+  if(!c)$('am').onclick=()=>mitti('Ich habe diese Frage falsch beantwortet: "'+q[2]+'" Die richtige Antwort ist "'+q[3][0]+'". Ich habe "'+txt+'" gewählt. Kannst du mir das einfach erklären?');
+}
+function done(){
+  const up=lvl()>R.l0;
+  $('quiz').innerHTML=(up?`<div class="up">🎉 Level ${lvl()} erreicht: ${title(lvl())}!</div>`:'')+`<div class="card"><h2>${R.ok} von ${R.ids.length} richtig</h2>Du hast ${S.xp-R.x0} XP bekommen. ${R.ok===R.ids.length?'Stark, alles richtig! 💪':R.ok>=3?'Gut gemacht! 👍':'Übung macht den Meister. Versuch es nochmal!'}<br><button class="go" id="again">Nochmal</button><button class="alt" id="bk">Themen</button></div>`;
+  $('again').onclick=()=>play(R.t);$('bk').onclick=()=>profMenu(CUR);
+}
+// ---- Chat mit Mitti ----
+const SYS='Du bist Mitti, ein freundlicher Lernhelfer für Jugendliche mit Lernschwierigkeiten in der Berufsausbildung (Gastronomie, Tischlerei, Schlosserei, Einzelhandel, Gartenbau, Straßenerhaltung, Reinigung, Textil). Duze, schreibe Deutsch, einfache kurze Sätze, erkläre einen Schritt auf einmal, sei geduldig und ermutigend, höchstens 5-6 Zeilen. Halte dich an Themen rund um die Ausbildung und das Lernen. Bei Not: Vertrauensperson empfehlen, Nummer gegen Kummer 116 111.';
+let hist=[],busy=false;
+function addMsg(cls,t){const r=document.createElement('div');r.className='row'+(cls==='u'?' me':'');if(cls==='b'){const a=document.createElement('div');a.className='av';a.style.cssText='width:34px;height:34px';r.appendChild(a)}
+  const d=document.createElement('div');d.className='m '+cls;d.textContent=t;r.appendChild(d);$('log').appendChild(r);$('log').scrollTop=1e9;return d}
+function showChat(){['start','home','quiz'].forEach(s=>$(s).classList.remove('on'));$('main').style.display='none';$('chat').classList.add('on');$('n1').className='';$('n2').className='on';if(!$('log').children.length)addMsg('b','Hi, ich bin Mitti! 💡 Frag mich alles zu deiner Ausbildung. Oder sag mir, was du nicht verstehst.')}
+async function mitti(text){
+  showChat();if(busy)return;busy=true;$('send').disabled=true;
+  addMsg('u',text);hist.push({role:'user',content:text});const out=addMsg('b','Mitti überlegt … 💡');
+  try{
+    let txt;
+    if(typeof claude!=='undefined'){
+      const sm=await claude.use('sample');if(!sm)throw 0;
+      const turns=hist.map((m,i)=>i===0?{role:'user',content:'[Anweisung: '+SYS+']\n\n'+m.content}:m);
+      txt=(await sm(turns,{cache:false,onText:({text})=>{out.textContent=text}})).text;
+    }else{
+      const r=await fetch(window.MITTI_API||'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist})});
+      if(!r.ok)throw 0;txt=(await r.json()).text;
+    }
+    out.textContent=txt;hist.push({role:'assistant',content:txt});
+  }catch(e){out.textContent='Oh, da ist etwas schiefgelaufen. Versuch es gleich nochmal.';hist.pop()}
+  finally{busy=false;$('send').disabled=false}
+}
+const sendIt=()=>{const t=$('in').value.trim();if(t){$('in').value='';mitti(t)}};
+$('send').onclick=sendIt;$('in').addEventListener('keydown',e=>{if(e.key==='Enter')sendIt()});
+$('n1').onclick=startMenu;$('n2').onclick=showChat;
+$('big').onclick=()=>document.body.classList.toggle('big');
+startMenu();
+</script>
+</body>
+</html>
